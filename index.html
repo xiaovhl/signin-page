@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>22级商英国商跨境专业晚点名</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 20px auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 8px; margin-bottom: 10px; }
+        #countdown { color: red; font-weight: bold; text-align: center; margin-top: 20px; }
+        button { padding: 8px 15px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h2 style="text-align: center;">22级商英国商跨境专业晚点名</h2>
+    <form id="signinForm">
+        <div class="form-group">
+            <label>姓名：</label>
+            <input type="text" id="name" required>
+        </div>
+        <div class="form-group">
+            <label>班级：</label>
+            <input type="text" id="class" required>
+        </div>
+        <div class="form-group">
+            <label>当前位置：</label>
+            <div id="locationInfo"></div>
+            <input type="text" id="manualLocation" style="display: none;">
+            <button type="button" onclick="getLocation()">获取位置</button>
+        </div>
+        <button type="submit">提交签到</button>
+    </form>
+    <div id="countdown"></div>
+    <button onclick="exportExcel()" style="display: block; margin: 20px auto;">导出Excel</button>
+
+    <script>
+        const deadline = new Date('2025-03-09T23:59:59').getTime();
+        let signData = JSON.parse(localStorage.getItem('signData')) || [];
+
+        // 获取地理位置
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else {
+                alert("浏览器不支持地理定位");
+            }
+        }
+
+        function showPosition(position) {
+            const location = `纬度: ${position.coords.latitude}, 经度: ${position.coords.longitude}`;
+            document.getElementById('manualLocation').style.display = 'none';
+            document.getElementById('locationInfo').textContent = location;
+        }
+
+        function showError(error) {
+            alert("无法获取位置，请手动输入");
+            document.getElementById('manualLocation').style.display = 'block';
+        }
+
+        // 倒计时
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const diff = deadline - now;
+
+            if (diff <= 0) {
+                document.getElementById('countdown').innerHTML = "签到已结束";
+                document.getElementById('signinForm').style.display = 'none';
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById('countdown').innerHTML = 
+                `剩余时间: ${days}天 ${hours}小时 ${minutes}分 ${seconds}秒`;
+        }
+
+        // 提交表单
+        document.getElementById('signinForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const entry = {
+                name: document.getElementById('name').value,
+                className: document.getElementById('class').value,
+                location: document.getElementById('locationInfo').textContent || 
+                         document.getElementById('manualLocation').value
+            };
+
+            signData.push(entry);
+            localStorage.setItem('signData', JSON.stringify(signData));
+            
+            alert("签到成功！");
+            this.reset();
+        });
+
+        // 导出Excel
+        function exportExcel() {
+            const ws = XLSX.utils.json_to_sheet(signData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "签到数据");
+            XLSX.writeFile(wb, "签到记录.xlsx");
+        }
+
+        // 初始化
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+    </script>
+</body>
+</html>
