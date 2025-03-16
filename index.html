@@ -1,3 +1,7 @@
+以下是修改后的代码，将获取位置的部分替换为下拉选项“是否在校”，选项为“是”或“否”：
+
+html
+复制代码
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -11,7 +15,6 @@
         input, select { width: 100%; padding: 8px; margin-bottom: 10px; }
         #countdown { color: red; font-weight: bold; text-align: center; margin-top: 20px; }
         button { padding: 8px 15px; margin-top: 10px; }
-        #locationStatus { color: #666; font-size: 0.9em; }
         #exportBtn { display: none; margin: 20px auto; }
     </style>
 </head>
@@ -34,11 +37,12 @@
             </select>
         </div>
         <div class="form-group">
-            <label>当前位置：</label>
-            <div id="locationInfo"></div>
-            <div id="locationStatus"></div>
-            <input type="text" id="manualLocation" style="display: none;">
-            <button type="button" onclick="getLocation()">获取位置</button>
+            <label>是否在校：</label>
+            <select id="onCampus" required>
+                <option value="">请选择</option>
+                <option value="是">是</option>
+                <option value="否">否</option>
+            </select>
         </div>
         <button type="submit">提交签到</button>
     </form>
@@ -46,41 +50,12 @@
     <button id="exportBtn" onclick="exportExcel()">导出Excel</button>
 
     <script>
-        // 学校坐标配置
-        const SCHOOL = {
-            name: "武汉城市职业学院",
-            lat: 30.439895,
-            lng: 114.313203,
-            radius: 1000
-        };
-
         const deadline = new Date('2025-03-16T23:59:59').getTime();
         let signData = JSON.parse(localStorage.getItem('signData')) || [];
 
-        // 优化定位速度配置
-        const GEOLOCATION_OPTIONS = {
-            enableHighAccuracy: true,   // 优先使用高精度定位
-            maximumAge: 300000,         // 5分钟内缓存有效
-            timeout: 10000              // 10秒超时
-        };
-
-        // 获取地理位置（优化版）
-        function getLocation() {
-            document.getElementById('locationStatus').textContent = "定位中...";
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    showPosition,
-                    showError,
-                    GEOLOCATION_OPTIONS
-                );
-            } else {
-                alert("浏览器不支持地理定位");
-            }
-        }
-
         // 定时检查导出时间
         function checkExportTime() {
-            const exportTime = new Date('2024-03-17T08:00:00').getTime();
+            const exportTime = new Date('2025-03-17T08:00:00').getTime();
             if (Date.now() >= exportTime) {
                 document.getElementById('exportBtn').style.display = 'block';
             }
@@ -93,9 +68,6 @@
             XLSX.utils.book_append_sheet(wb, ws, "签到数据");
             XLSX.writeFile(wb, `签到汇总_${new Date().toLocaleDateString()}.xlsx`);
         }
-
-        // 其他保持不变的代码...
-        // 包括距离计算、位置显示、表单提交等功能
 
         // 初始化定时器
         setInterval(() => {
@@ -126,7 +98,7 @@
             const record = {
                 name: document.getElementById('name').value,
                 class: document.getElementById('class').value,
-                location: document.getElementById('locationInfo').textContent || document.getElementById('manualLocation').value,
+                onCampus: document.getElementById('onCampus').value,
                 timestamp: new Date().toLocaleString()
             };
 
@@ -134,8 +106,6 @@
             localStorage.setItem('signData', JSON.stringify(signData));
             alert('签到成功！');
             this.reset();
-            document.getElementById('locationInfo').textContent = '';
-            document.getElementById('locationStatus').textContent = '';
         });
     </script>
 </body>
