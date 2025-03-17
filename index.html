@@ -51,7 +51,7 @@
 
         // 定时检查导出时间
         function checkExportTime() {
-            const exportTime = new Date('2025-03-17T08:00:00').getTime();
+            const exportTime = new Date('2025-03-17T11:10:00').getTime();
             if (Date.now() >= exportTime) {
                 document.getElementById('exportBtn').style.display = 'block';
             }
@@ -83,7 +83,8 @@
             document.getElementById('countdown').innerHTML = 
                 `剩余签到时间：${hours}小时 ${minutes}分 ${seconds}秒`;
 
-         
+         // 检查导出时间
+             checkExportTime();
         }, 1000);
 
         // 表单提交事件
