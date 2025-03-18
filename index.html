@@ -1,19 +1,53 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <title>22级商英国商跨境专业晚点名</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 500px; margin: 20px auto; padding: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 8px; margin-bottom: 10px; }
-        #countdown { color: red; font-weight: bold; text-align: center; margin-top: 20px; }
-        button { padding: 8px 15px; margin-top: 10px; }
-        #exportBtn { display: none; margin: 20px auto; }
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        #countdown {
+            color: red;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 8px 15px;
+            margin-top: 10px;
+        }
+
+        #exportBtn {
+            display: block;
+            margin: 20px auto;
+        }
     </style>
 </head>
+
 <body>
     <h2 style="text-align: center;">22级商英国商跨境专业316晚点名</h2>
     <form id="signinForm">
@@ -49,14 +83,6 @@
         const deadline = new Date('2025-03-16T23:59:59').getTime();
         let signData = JSON.parse(localStorage.getItem('signData')) || [];
 
-        // 定时检查导出时间
-        function checkExportTime() {
-            const exportTime = new Date('2025-03-17T11:10:00').getTime();
-            if (Date.now() >= exportTime) {
-                document.getElementById('exportBtn').style.display = 'block';
-            }
-        }
-
         // 导出Excel功能
         function exportExcel() {
             const ws = XLSX.utils.json_to_sheet(signData);
@@ -70,7 +96,7 @@
             // 更新倒计时
             const now = Date.now();
             const diff = deadline - now;
-            
+
             if (diff < 0) {
                 document.getElementById('countdown').innerHTML = "签到已结束";
                 return;
@@ -80,17 +106,14 @@
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-            document.getElementById('countdown').innerHTML = 
+            document.getElementById('countdown').innerHTML =
                 `剩余签到时间：${hours}小时 ${minutes}分 ${seconds}秒`;
-
-         // 检查导出时间
-             checkExportTime();
         }, 1000);
 
         // 表单提交事件
-        document.getElementById('signinForm').addEventListener('submit', function(e) {
+        document.getElementById('signinForm').addEventListener('submit', function (e) {
             e.preventDefault();
-            
+
             const record = {
                 name: document.getElementById('name').value,
                 class: document.getElementById('class').value,
@@ -105,4 +128,5 @@
         });
     </script>
 </body>
+
 </html>
