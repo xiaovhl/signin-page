@@ -1,53 +1,27 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
     <meta charset="UTF-8">
     <title>22级商英国商跨境专业晚点名</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 500px;
-            margin: 20px auto;
-            padding: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        input,
-        select {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-        }
-
-        #countdown {
-            color: red;
-            font-weight: bold;
-            text-align: center;
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 20px auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 8px; margin-bottom: 10px; }
+        #countdown { color: red; font-weight: bold; text-align: center; margin: 20px 0; }
+        button { padding: 8px 15px; margin: 10px 0; width: 100%; }
+        #exportBtn { background-color: #4CAF50; color: white; }
+        #dataStatus { 
             margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
         }
-
-        button {
-            padding: 8px 15px;
-            margin-top: 10px;
-        }
-
-        #exportBtn {
-            display: block;
-            margin: 20px auto;
-        }
+        .data-item { margin: 5px 0; color: #666; }
     </style>
 </head>
-
 <body>
     <h2 style="text-align: center;">22级商英国商跨境专业316晚点名</h2>
     <form id="signinForm">
@@ -76,31 +50,76 @@
         </div>
         <button type="submit">提交签到</button>
     </form>
+
     <div id="countdown"></div>
     <button id="exportBtn" onclick="exportExcel()">导出Excel</button>
+    
+    <div id="dataStatus">
+        <p class="data-item">已存储数据量：<span id="dataCount">0</span> 条</p>
+        <p class="data-item">最后更新时间：<span id="lastUpdate">暂无</span></p>
+    </div>
 
     <script>
-        const deadline = new Date('2025-03-16T23:59:59').getTime();
-        let signData = JSON.parse(localStorage.getItem('signData')) || [];
-
-        // 导出Excel功能
-        function exportExcel() {
-            if (signData.length === 0) {
-                alert('暂无签到数据，无法导出。');
-                return;
-            }
-            const ws = XLSX.utils.json_to_sheet(signData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "签到数据");
-            XLSX.writeFile(wb, `签到汇总_${new Date().toLocaleDateString()}.xlsx`);
+        // XLSX库可用性检查
+        if(typeof XLSX === 'undefined') {
+            alert("错误：表格库加载失败，请检查网络连接！");
         }
 
-        // 初始化定时器
-        setInterval(() => {
-            // 更新倒计时
+        // 初始化数据（兼容旧版数据）
+        let signData = JSON.parse(localStorage.getItem('signData')) || [];
+        const oldData = JSON.parse(localStorage.getItem('oldSignData')) || [];
+        if(oldData.length > 0) {
+            signData = signData.concat(oldData);
+            localStorage.setItem('signData', JSON.stringify(signData));
+            localStorage.removeItem('oldSignData');
+        }
+
+        // 数据状态监控
+        function updateDataStatus() {
+            const data = JSON.parse(localStorage.getItem('signData')) || [];
+            document.getElementById('dataCount').textContent = data.length;
+            document.getElementById('lastUpdate').textContent = 
+                data.length > 0 ? data[data.length-1].timestamp : "暂无";
+        }
+
+        // 导出Excel功能（增强版）
+        function exportExcel() {
+            try {
+                const freshData = JSON.parse(localStorage.getItem('signData')) || [];
+                if(freshData.length === 0) {
+                    alert("无签到数据可导出！");
+                    return;
+                }
+
+                // 数据格式转换（添加中文表头）
+                const formattedData = freshData.map(item => ({
+                    "姓名": item.name,
+                    "班级": item.class,
+                    "是否在校": item.onCampus,
+                    "签到时间": item.timestamp
+                }));
+
+                const ws = XLSX.utils.json_to_sheet(formattedData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "签到数据");
+                
+                // 生成文件名（避免特殊字符问题）
+                const fileName = `签到数据_${new Date().toLocaleDateString('zh-CN')}.xlsx`
+                    .replace(/\//g, '-');
+                
+                XLSX.writeFile(wb, fileName);
+            } catch (e) {
+                console.error("导出失败:", e);
+                alert("导出失败，请检查控制台日志！");
+            }
+        }
+
+        // 倒计时功能
+        const deadline = new Date('2025-03-16T23:59:59').getTime();
+        function updateCountdown() {
             const now = Date.now();
             const diff = deadline - now;
-
+            
             if (diff < 0) {
                 document.getElementById('countdown').innerHTML = "签到已结束";
                 return;
@@ -110,27 +129,59 @@
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-            document.getElementById('countdown').innerHTML =
+            document.getElementById('countdown').innerHTML = 
                 `剩余签到时间：${hours}小时 ${minutes}分 ${seconds}秒`;
-        }, 1000);
+        }
 
-        // 表单提交事件
-        document.getElementById('signinForm').addEventListener('submit', function (e) {
+        // 表单提交处理
+        document.getElementById('signinForm').addEventListener('submit', function(e) {
             e.preventDefault();
-
+            
             const record = {
-                name: document.getElementById('name').value,
+                name: document.getElementById('name').value.trim(),
                 class: document.getElementById('class').value,
                 onCampus: document.getElementById('onCampus').value,
-                timestamp: new Date().toLocaleString()
+                timestamp: new Date().toLocaleString('zh-CN', { 
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false 
+                })
             };
 
+            // 数据校验
+            if (!record.name || !record.class || !record.onCampus) {
+                alert("请填写完整信息！");
+                return;
+            }
+
+            // 存储数据
             signData.push(record);
-            localStorage.setItem('signData', JSON.stringify(signData));
-            alert('签到成功！');
+            try {
+                localStorage.setItem('signData', JSON.stringify(signData));
+                sessionStorage.setItem('signBackup', JSON.stringify(signData));
+            } catch (e) {
+                console.error("存储错误:", e);
+                alert("数据保存失败，请清理浏览器存储空间！");
+                return;
+            }
+
+            alert(`签到成功！当前累计签到：${signData.length}人`);
             this.reset();
+            updateDataStatus();
         });
+
+        // 初始化定时器
+        setInterval(() => {
+            updateCountdown();
+            updateDataStatus();
+        }, 1000);
+
+        // 页面加载后立即更新状态
+        updateDataStatus();
     </script>
 </body>
-
 </html>
