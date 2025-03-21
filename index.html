@@ -20,10 +20,12 @@
             background-color: #f9f9f9;
         }
         .data-item { margin: 5px 0; color: #666; }
+        /* 新增：位置输入框初始隐藏 */
+        #locationGroup { display: none; }
     </style>
 </head>
 <body>
-    <h2 style="text-align: center;">22级商英国商跨境专业316晚点名</h2>
+    <h2 style="text-align: center;">22级商英国商跨境专业323晚点名</h2>
     <form id="signinForm">
         <div class="form-group">
             <label>姓名：</label>
@@ -47,6 +49,11 @@
                 <option value="是">是</option>
                 <option value="否">否</option>
             </select>
+        </div>
+        <!-- 新增位置输入 -->
+        <div class="form-group" id="locationGroup">
+            <label>当前位置：</label>
+            <input type="text" id="location">
         </div>
         <button type="submit">提交签到</button>
     </form>
@@ -82,6 +89,20 @@
                 data.length > 0 ? data[data.length-1].timestamp : "暂无";
         }
 
+        // 监听是否在校状态变化
+        document.getElementById('onCampus').addEventListener('change', function() {
+            const locationGroup = document.getElementById('locationGroup');
+            const locationInput = document.getElementById('location');
+            if (this.value === '否') {
+                locationGroup.style.display = 'block';
+                locationInput.required = true;
+            } else {
+                locationGroup.style.display = 'none';
+                locationInput.required = false;
+                locationInput.value = ''; // 清空输入
+            }
+        });
+
         // 导出Excel功能（增强版）
         function exportExcel() {
             try {
@@ -96,6 +117,7 @@
                     "姓名": item.name,
                     "班级": item.class,
                     "是否在校": item.onCampus,
+                    "当前位置": item.location || '在校', // 新增当前位置列
                     "签到时间": item.timestamp
                 }));
 
@@ -115,7 +137,7 @@
         }
 
         // 倒计时功能
-        const deadline = new Date('2025-03-16T23:59:59').getTime();
+        const deadline = new Date('2025-03-24T09:29:59').getTime();
         function updateCountdown() {
             const now = Date.now();
             const diff = deadline - now;
@@ -137,10 +159,20 @@
         document.getElementById('signinForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
+            const onCampus = document.getElementById('onCampus').value;
+            const location = document.getElementById('location').value.trim();
+            
+            // 校验位置信息
+            if (onCampus === '否' && !location) {
+                alert("请填写当前位置！");
+                return;
+            }
+
             const record = {
                 name: document.getElementById('name').value.trim(),
                 class: document.getElementById('class').value,
-                onCampus: document.getElementById('onCampus').value,
+                onCampus: onCampus,
+                location: onCampus === '否' ? location : '在校', // 记录位置信息
                 timestamp: new Date().toLocaleString('zh-CN', { 
                     year: 'numeric',
                     month: '2-digit',
@@ -171,6 +203,7 @@
 
             alert(`签到成功！当前累计签到：${signData.length}人`);
             this.reset();
+            document.getElementById('locationGroup').style.display = 'none'; // 重置后隐藏位置输入
             updateDataStatus();
         });
 
